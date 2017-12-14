@@ -14,8 +14,19 @@ cabal-version:       >=1.10
 library
   build-depends:       peano
   exposed-modules:     Data.Fin
+  other-modules:       Data.Ap
   build-depends:       base >=4.7 && <5
+                     , clist >=0.2 && <0.3
+                     , natural-induction >=0.2 && <0.3
   default-language:    Haskell2010
-  default-extensions:  PolyKinds
+  default-extensions:  UnicodeSyntax
+                     , LambdaCase
+                     , EmptyCase
+                     , ScopedTypeVariables
+                     , FlexibleContexts
+                     , FlexibleInstances
+                     , PolyKinds
                      , DataKinds
                      , GADTs
+                     , StandaloneDeriving
+  ghc-options:         -Wall -Wno-unticked-promoted-constructors

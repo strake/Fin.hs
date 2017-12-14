@@ -15,8 +15,6 @@ import Data.Peano (Peano)
 import qualified Data.Peano as P
 import Data.Semigroup (Endo (..))
 import qualified Numeric.Natural as N
-import qualified Text.ParserCombinators.ReadP as Read
-import Text.ParserCombinators.ReadPrec (readP_to_Prec)
 import Text.Read (Read (..))
 
 data Fin :: Peano -> * where
@@ -25,12 +23,12 @@ data Fin :: Peano -> * where
 
 deriving instance Eq (Fin n)
 deriving instance Ord (Fin n)
-deriving instance Show (Fin n)
+
+instance Show (Fin n) where show = show . (fromFin :: Fin n -> N.Natural)
 
 instance Read (Fin P.Zero) where readPrec = empty
-instance Read (Fin n) => Read (Fin (P.Succ n)) where
-    readPrec = Succ <$ string "Succ" <*> readPrec <|> Zero <$ string "Zero"
-      where string = readP_to_Prec . pure . Read.string
+instance (Natural n, Read (Fin n)) => Read (Fin (P.Succ n)) where
+    readPrec = toFinMay <$> readPrec @N.Natural >>= maybe empty pure
 
 instance Bounded (Fin (P.Succ P.Zero)) where
     minBound = Zero

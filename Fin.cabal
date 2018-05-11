@@ -14,9 +14,9 @@ cabal-version:       >=1.10
 library
   build-depends:       peano
   exposed-modules:     Data.Fin
+                     , Data.Fin.List
   other-modules:       Data.Ap
   build-depends:       base >=4.7 && <5
-                     , clist >=0.2 && <0.3
                      , natural-induction >=0.2 && <0.3
   default-language:    Haskell2010
   default-extensions:  UnicodeSyntax
@@ -29,4 +29,5 @@ library
                      , DataKinds
                      , GADTs
                      , StandaloneDeriving
-  ghc-options:         -Wall -Wno-unticked-promoted-constructors
+                     , DeriveFunctor, DeriveFoldable, DeriveTraversable
+  ghc-options:         -Wall -Wno-name-shadowing -Wno-unticked-promoted-constructors

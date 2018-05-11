@@ -5,7 +5,7 @@ module Data.Fin where
 import Prelude hiding (iterate)
 import Control.Applicative
 import Data.Ap
-import Data.CList (CList (..))
+import Data.Fin.List (List (..))
 import Data.Foldable
 import Data.Function (on)
 import Data.Functor.Compose
@@ -52,7 +52,7 @@ instance (Natural n, Enum (Fin n)) => Enum (Fin (P.Succ n)) where
     enumFrom Zero = Zero : (Succ <$> toList enum)
     enumFrom (Succ n) = (tail . enumFrom . inj₁) n
 
-enum :: Natural n => CList n (Fin n)
+enum :: Natural n => List n (Fin n)
 enum = ap $ natural (Ap Nil) (Ap (Zero :. (Succ <$> enum)))
 
 instance Num (Fin P.Zero) where

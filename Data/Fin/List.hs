@@ -1,6 +1,5 @@
-module Data.CList (module Data.Peano,
-                   CList (..),
-                   fromList, uncons, head, tail, init, last, reverse) where
+module Data.Fin.List (module Data.Peano, List (..),
+                      fromList, uncons, head, tail, init, last, reverse) where
 
 import Prelude (Bool (..), Show (..), fst, snd, ($), (&&))
 
@@ -21,84 +20,83 @@ import Data.Typeable
 import Text.Read (Read (..))
 
 infixr 5 :.
+data List n a where
+    Nil :: List Zero a
+    (:.) :: a -> List n a -> List (Succ n) a
 
-data CList n a where
-    Nil :: CList Zero a
-    (:.) :: a -> CList n a -> CList (Succ n) a
+deriving instance (Eq   a) => Eq   (List n a)
+deriving instance (Ord  a) => Ord  (List n a)
+deriving instance Functor     (List n)
+deriving instance Foldable    (List n)
+deriving instance Traversable (List n)
+deriving instance Typeable List
 
-deriving instance (Eq   a) => Eq   (CList n a)
-deriving instance (Ord  a) => Ord  (CList n a)
-deriving instance Functor     (CList n)
-deriving instance Foldable    (CList n)
-deriving instance Traversable (CList n)
-deriving instance Typeable CList
-
-instance Show a => Show (CList n a) where
+instance Show a => Show (List n a) where
     showsPrec = showsPrec1
 
-instance (Read a, Natural n) => Read (CList n a) where
+instance (Read a, Natural n) => Read (List n a) where
     readPrec = readPrec1
 
-fromList :: Natural n => [a] -> Maybe (CList n a)
+fromList :: Natural n => [a] -> Maybe (List n a)
 fromList = t $ natural (T $ \ case [] -> Just Nil
                                    _  -> Nothing)
                        (T $ \ case [] -> Nothing
                                    x:xs -> (x:.) <$> fromList xs)
 
-data T a n = T { t :: [a] -> Maybe (CList n a) }
+data T a n = T { t :: [a] -> Maybe (List n a) }
 
-instance Semigroup a => Semigroup (CList n a) where
+instance Semigroup a => Semigroup (List n a) where
     Nil <> Nil = Nil
     (x:.xs) <> (y:.ys) = x<>y:.xs<>ys
 
-instance (Semigroup a, Monoid a) => Monoid (CList Zero a) where
+instance (Semigroup a, Monoid a) => Monoid (List Zero a) where
     mempty = Nil
     mappend = (<>)
 
-instance (Semigroup a, Semigroup (CList n a),
-          Monoid a, Monoid (CList n a)) => Monoid (CList (Succ n) a) where
+instance (Semigroup a, Semigroup (List n a),
+          Monoid a, Monoid (List n a)) => Monoid (List (Succ n) a) where
     mempty = mempty:.mempty
     mappend = (<>)
 
-instance Applicative (CList Zero) where
+instance Applicative (List Zero) where
     pure _ = Nil
     Nil <*> Nil = Nil
 
-instance (Applicative (CList n)) => Applicative (CList (Succ n)) where
+instance (Applicative (List n)) => Applicative (List (Succ n)) where
     pure x = x :. pure x
     f:.fs <*> x:.xs = f x :. (fs <*> xs)
 
-instance Eq1 (CList n) where
+instance Eq1 (List n) where
     liftEq _ Nil Nil = True
     liftEq (==) (x:.xs) (y:.ys) = x == y && liftEq (==) xs ys
 
-instance Ord1 (CList n) where
+instance Ord1 (List n) where
     liftCompare _ Nil Nil = EQ
     liftCompare cmp (x:.xs) (y:.ys) = cmp x y <> liftCompare cmp xs ys
 
-instance Show1 (CList n) where
+instance Show1 (List n) where
     liftShowsPrec sp sl n = liftShowsPrec sp sl n . toList
 
-instance Natural n => Read1 (CList n) where
+instance Natural n => Read1 (List n) where
     liftReadPrec rp rl = fromList <$> liftReadPrec rp rl >>= maybe empty pure
 
-uncons :: CList (Succ n) a -> (a, CList n a)
+uncons :: List (Succ n) a -> (a, List n a)
 uncons (x:.xs) = (x, xs)
 
-head :: CList (Succ n) a -> a
+head :: List (Succ n) a -> a
 head = fst . uncons
 
-tail :: CList (Succ n) a -> CList n a
+tail :: List (Succ n) a -> List n a
 tail = snd . uncons
 
-init :: CList (Succ n) a -> CList n a
+init :: List (Succ n) a -> List n a
 init (_:.Nil)       = Nil
 init (x:.xs@(_:._)) = x:.init xs
 
-last :: CList (Succ n) a -> a
+last :: List (Succ n) a -> a
 last (x:.Nil) = x
 last (_:.xs@(_:._)) = last xs
 
-reverse :: CList n a -> CList n a
+reverse :: List n a -> List n a
 reverse Nil = Nil
 reverse xs@(_:._) = liftA2 (:.) last (reverse . init) xs

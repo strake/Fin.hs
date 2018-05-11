@@ -16,6 +16,7 @@ library
   exposed-modules:     Data.Fin
                      , Data.Fin.List
   other-modules:       Data.Ap
+                     , Data.Fin.Private
   build-depends:       base >=4.7 && <5
                      , natural-induction >=0.2 && <0.3
   default-language:    Haskell2010

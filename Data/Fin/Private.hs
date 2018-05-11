@@ -32,7 +32,7 @@ data Fin :: Peano -> * where
 deriving instance Eq (Fin n)
 deriving instance Ord (Fin n)
 
-instance Show (Fin n) where show = show . (fromFin :: Fin n -> N.Natural)
+instance Show (Fin n) where show = show . fromFin @N.Natural
 
 instance Read (Fin P.Zero) where readPrec = empty
 instance (Natural n, Read (Fin n)) => Read (Fin (P.Succ n)) where
@@ -128,7 +128,7 @@ fromList = t $ natural (T $ \ case [] -> Just Nil
                        (T $ \ case [] -> Nothing
                                    x:xs -> (x:.) <$> fromList xs)
 
-data T a n = T { t :: [a] -> Maybe (List n a) }
+newtype T a n = T { t :: [a] -> Maybe (List n a) }
 
 instance Semigroup a => Semigroup (List n a) where
     Nil <> Nil = Nil

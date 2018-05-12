@@ -4,6 +4,7 @@ module Data.Fin.Private where
 
 import Prelude (Functor (..), Show (..), Num (..), Enum (..), Bounded (..), Integral (..), Bool (..), Integer, ($), (&&), fst, snd, error)
 import Control.Applicative
+import Control.Arrow (Kleisli (..))
 import Control.Category
 import Control.Monad (Monad (..))
 import Data.Ap
@@ -19,7 +20,7 @@ import Data.Natural.Class
 import Data.Ord
 import Data.Peano (Peano)
 import qualified Data.Peano as P
-import Data.Semigroup (Semigroup (..), Endo (..))
+import Data.Semigroup (Semigroup (..))
 import Data.Traversable
 import Data.Typeable
 import qualified Numeric.Natural as N
@@ -38,49 +39,44 @@ instance Read (Fin P.Zero) where readPrec = empty
 instance (Natural n, Read (Fin n)) => Read (Fin (P.Succ n)) where
     readPrec = toFinMay <$> readPrec @N.Natural >>= maybe empty pure
 
-instance Bounded (Fin (P.Succ P.Zero)) where
+instance Natural n => Bounded (Fin (P.Succ n)) where
     minBound = Zero
-    maxBound = Zero
+    maxBound = getCompose $ natural (Compose Zero) (Compose maxBound)
 
-instance Bounded (Fin n) => Bounded (Fin (P.Succ n)) where
-    minBound = Zero
-    maxBound = Succ maxBound
+instance Natural n => Enum (Fin n) where
+    toEnum n = natural (error "toEnum @(Fin Zero)") $ case n of
+        0 -> Zero
+        _ -> Succ (toEnum (pred n))
+    fromEnum = unFlip . getCompose $ natural (Compose . Flip $ \ case) $ Compose . Flip $ \ case
+        Zero -> 0
+        Succ n -> succ (fromEnum n)
+    succ = unJoin . getCompose $ natural (Compose . Join $ \ case) $ Compose . Join $ \ case
+        Zero -> toEnum 1
+        Succ n -> Succ (succ n)
+    pred = unJoin . getCompose $ natural (Compose . Join $ \ case) $ Compose . Join $ \ case
+        Zero -> error "pred 0"
+        Succ n -> inj₁ n
+    enumFrom = runKleisli . unJoin . getCompose $ natural (Compose . Join . Kleisli $ \ case) $ Compose . Join . Kleisli @[] $ \ case
+        Zero -> Zero : (Succ <$> toList enum)
+        Succ n -> (L.tail . enumFrom . inj₁) n
 
-instance Enum (Fin P.Zero) where
-    toEnum _ = error "toEnum @(Fin Zero)"
-    fromEnum = \ case
-    succ = \ case
-    pred = \ case
-
-instance (Natural n, Enum (Fin n)) => Enum (Fin (P.Succ n)) where
-    toEnum 0 = Zero
-    toEnum n = Succ (toEnum (pred n))
-    fromEnum Zero = 0
-    fromEnum (Succ n) = succ (fromEnum n)
-    enumFrom Zero = Zero : (Succ <$> toList enum)
-    enumFrom (Succ n) = (L.tail . enumFrom . inj₁) n
+newtype Join s a = Join { unJoin :: s a a }
 
 enum :: Natural n => List n (Fin n)
 enum = ap $ natural (Ap Nil) (Ap (Zero :. (Succ <$> enum)))
 
-instance Num (Fin P.Zero) where
-    (+) = \ case
-    (*) = \ case
+instance Natural n => Num (Fin n) where
+    (+) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((+) @N.Natural `on` fromFin) a b
+    (-) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((-) @  Integer `on` fromFin) a b
+    (*) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((*) @N.Natural `on` fromFin) a b
     abs = id
-    negate = \ case
-    signum = \ case
-    fromInteger _ = error "fromInteger @(Fin Zero)"
+    negate = unJoin . getCompose $ natural (Compose . Join $ \ case) $ Compose . Join $ \ a -> toFin $ (negate @Integer . fromFin) a
+    signum = unJoin . getCompose $ natural (Compose . Join $ \ case) $ Compose . Join $ \ case
+        Zero -> Zero
+        Succ _ -> toFin (1 :: N.Natural)
+    fromInteger n = natural (error "fromInteger @(Fin Zero)") (toFin n)
 
-instance (Natural n, Num (Fin n)) => Num (Fin (P.Succ n)) where
-    a + b = toFin $ ((+) @N.Natural `on` fromFin) a b
-    a - b = toFin $ ((-) @  Integer `on` fromFin) a b
-    a * b = toFin $ ((*) @N.Natural `on` fromFin) a b
-
-    abs = id
-    signum = lift₁ . appEndo . getCompose $
-             natural @n (Compose . Endo $ \ case) (Compose . Endo $ pure Zero)
-
-    fromInteger = toFin
+newtype Join₂ s a = Join₂ { unJoin₂ :: s a (s a a) }
 
 inj₁ :: Fin n -> Fin (P.Succ n)
 inj₁ Zero = Zero
@@ -134,22 +130,18 @@ instance Semigroup a => Semigroup (List n a) where
     Nil <> Nil = Nil
     (x:.xs) <> (y:.ys) = x<>y:.xs<>ys
 
-instance (Semigroup a, Monoid a) => Monoid (List P.Zero a) where
-    mempty = Nil
+instance (Natural n, Semigroup a, Monoid a) => Monoid (List n a) where
+    mempty = unFlip $ natural (Flip Nil) (Flip $ mempty:.mempty)
     mappend = (<>)
 
-instance (Semigroup a, Semigroup (List n a),
-          Monoid a, Monoid (List n a)) => Monoid (List (P.Succ n) a) where
-    mempty = mempty:.mempty
-    mappend = (<>)
+instance Natural n => Applicative (List n) where
+    pure a = unFlip $ natural (Flip Nil) (Flip $ a:.pure a)
+    (<*>) = unS $ natural (S $ \ Nil Nil -> Nil)
+                          (S $ \ (f:.fs) (x:.xs) -> f x :. (fs <*> xs))
 
-instance Applicative (List P.Zero) where
-    pure _ = Nil
-    Nil <*> Nil = Nil
+newtype Flip f a b = Flip { unFlip :: f b a }
 
-instance (Applicative (List n)) => Applicative (List (P.Succ n)) where
-    pure x = x :. pure x
-    f:.fs <*> x:.xs = f x :. (fs <*> xs)
+newtype S a b n = S { unS :: List n (a -> b) -> List n a -> List n b }
 
 instance Eq1 (List n) where
     liftEq _ Nil Nil = True

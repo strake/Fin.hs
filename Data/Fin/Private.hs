@@ -2,7 +2,7 @@
 
 module Data.Fin.Private where
 
-import Prelude (Functor (..), Show (..), Num (..), Enum (..), Bounded (..), Integral (..), Bool (..), Integer, ($), (&&), fst, snd, error)
+import Prelude (Functor (..), Show (..), Num (..), Enum (..), Bounded (..), Integral (..), Bool (..), Integer, ($), (&&), fst, snd, flip, uncurry, error)
 import Control.Applicative
 import Control.Arrow (Kleisli (..))
 import Control.Category
@@ -182,3 +182,13 @@ reverse xs@(_:._) = liftA2 (:.) last (reverse . init) xs
 Nil !! n = case n of
 (x:._)  !! Zero = x
 (_:.xs) !! Succ n = xs !! n
+
+at :: Functor f => Fin n -> (a -> f a) -> List n a -> f (List n a)
+at Zero f (a:.as) = (:.as) <$> f a
+at (Succ n) f (a:.as) = (a:.) <$> at n f as
+
+swap :: Fin n -> Fin n -> List n a -> List n a
+swap Zero Zero as = as
+swap (Succ m) (Succ n) (a:.as) = a:.swap m n as
+swap Zero (Succ n) (a:.as) = uncurry (:.) $ at n (flip (,) a) as
+swap (Succ m) Zero (a:.as) = uncurry (:.) $ at m (flip (,) a) as

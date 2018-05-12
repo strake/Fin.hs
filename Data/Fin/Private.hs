@@ -93,12 +93,11 @@ fromFin (Succ n) = succ (fromFin n)
 toFin :: ∀ n a . (Natural n, Integral a) => a -> Fin (P.Succ n)
 toFin = fromJust . toFinMay . (`mod` getConst (iterate @n (+1) 1))
 
-toFinMay :: (Natural n, Integral a) => a -> Maybe (Fin (P.Succ n))
-toFinMay = getCompose . getCompose . getCompose $
-           natural (Compose . Compose . Compose $ \ case 0 -> Just Zero
-                                                         _ -> Nothing)
-                   (Compose . Compose . Compose $ \ case 0 -> Just Zero
-                                                         n -> Succ <$> toFinMay (n-1))
+toFinMay :: (Natural n, Integral a) => a -> Maybe (Fin n)
+toFinMay = getCompose . getCompose $
+           natural (Compose . Compose $ pure Nothing)
+                   (Compose . Compose $ \ case 0 -> Just Zero
+                                               n -> Succ <$> toFinMay (n-1))
 
 infixr 5 :.
 data List n a where

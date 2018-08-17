@@ -31,4 +31,11 @@ library
                      , GADTs
                      , StandaloneDeriving
                      , DeriveFunctor, DeriveFoldable, DeriveTraversable
-  ghc-options:         -Wall -Wno-name-shadowing -Wno-unticked-promoted-constructors
+  ghc-options:         -Wall -Wcompat -Wredundant-constraints
+                       -Wincomplete-record-updates -Wincomplete-uni-patterns
+                       -Wno-name-shadowing -Wno-unticked-promoted-constructors
+                       -Werror=incomplete-patterns
+                       -Werror=incomplete-uni-patterns
+                       -Werror=incomplete-record-updates
+                       -Werror=missing-fields
+                       -Werror=missing-methods

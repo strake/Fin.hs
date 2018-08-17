@@ -10,10 +10,12 @@ import Control.Monad (Monad (..))
 import Data.Ap
 import Data.Eq
 import Data.Foldable
+import Data.Foldable1
 import Data.Function (on)
 import Data.Functor.Classes
 import Data.Functor.Compose
 import qualified Data.List as L
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
 import Data.Monoid hiding ((<>))
 import Data.Natural.Class
@@ -156,6 +158,9 @@ instance Show1 (List n) where
 
 instance Natural n => Read1 (List n) where
     liftReadPrec rp rl = fromList <$> liftReadPrec rp rl >>= maybe empty pure
+
+instance Natural n => Foldable1 (List (P.Succ n)) where
+    toNonEmpty (a:.as) = a:|toList as
 
 uncons :: List (P.Succ n) a -> (a, List n a)
 uncons (x:.xs) = (x, xs)

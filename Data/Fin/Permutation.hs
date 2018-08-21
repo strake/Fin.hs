@@ -2,7 +2,7 @@
 
 module Data.Fin.Permutation (Permutation, apply, unapply, swap, orbit, cycles) where
 
-import Prelude (Functor (..), Eq (..), Bool (..), ($), (<$>), otherwise, snd, flip, curry, uncurry)
+import Prelude (Functor (..), Eq (..), Show (..), Bool (..), ($), (<$>), otherwise, snd, flip, curry, uncurry)
 import Algebra
 import Control.Category (Category (..))
 import Data.Fin
@@ -16,6 +16,9 @@ import qualified Data.Peano as P
 data Permutation n where
     PZ :: Permutation P.Zero
     PS :: Fin (P.Succ n) -> Permutation n -> Permutation (P.Succ n)
+
+deriving instance Eq (Permutation n)
+deriving instance Show (Permutation n)
 
 apply :: Permutation n -> List n a -> List n a
 apply PZ Nil = Nil

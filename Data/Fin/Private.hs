@@ -182,6 +182,10 @@ reverse :: List n a -> List n a
 reverse Nil = Nil
 reverse xs@(_:._) = liftA2 (:.) last (reverse . init) xs
 
+rotate :: Fin n -> List n a -> List n a
+rotate Zero as = as
+rotate (Succ n) as = rotate (inj₁ n) $ last as :. init as
+
 (!!) :: List n a -> Fin n -> a
 Nil !! n = case n of
 (x:._)  !! Zero = x

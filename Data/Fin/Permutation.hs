@@ -2,16 +2,18 @@
 
 module Data.Fin.Permutation (Permutation, apply, unapply, swap, orbit, cycles) where
 
-import Prelude (Functor (..), Eq (..), Show (..), Bool (..), ($), (<$>), otherwise, snd, flip, curry, uncurry)
+import Prelude (Functor (..), Applicative (..), Eq (..), Show (..), Bool (..), ($), (<$>), otherwise, snd, flip, curry, uncurry)
 import Algebra
 import Control.Category (Category (..))
 import Data.Fin
 import Data.Fin.List hiding (swap)
 import qualified Data.Fin.List as L
 import Data.Foldable (elem, minimum, toList)
+import Data.Functor.Compose (Compose (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Natural.Class (Natural (..))
 import qualified Data.Peano as P
+import Data.Universe.Class
 
 data Permutation n where
     PZ :: Permutation P.Zero
@@ -19,6 +21,11 @@ data Permutation n where
 
 deriving instance Eq (Permutation n)
 deriving instance Show (Permutation n)
+
+instance Natural n => Universe (Permutation n) where
+    universe = getCompose $ natural (Compose [PZ]) (Compose $ PS <$> toList enum <*> universe)
+
+instance Natural n => Finite (Permutation n)
 
 apply :: Permutation n -> List n a -> List n a
 apply PZ Nil = Nil

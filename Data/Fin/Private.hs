@@ -17,7 +17,7 @@ import Data.Functor.Compose
 import qualified Data.List as L
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
-import Data.Monoid hiding ((<>))
+import Data.Monoid (Monoid (..))
 import Data.Natural.Class
 import Data.Ord
 import Data.Peano (Peano)

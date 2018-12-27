@@ -1,3 +1,3 @@
-module Data.Fin (Fin (..), enum, inj₁, lift₁, fromFin, toFin, toFinMay) where
+module Data.Fin (Fin (..), enum, inj₁, proj₁, lift₁, fromFin, toFin, toFinMay) where
 
 import Data.Fin.Private

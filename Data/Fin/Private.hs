@@ -132,7 +132,7 @@ instance Semigroup a => Semigroup (List n a) where
     Nil <> Nil = Nil
     (x:.xs) <> (y:.ys) = x<>y:.xs<>ys
 
-instance (Natural n, Semigroup a, Monoid a) => Monoid (List n a) where
+instance (Natural n, Monoid a) => Monoid (List n a) where
     mempty = unFlip $ natural (Flip Nil) (Flip $ mempty:.mempty)
     mappend = (<>)
 

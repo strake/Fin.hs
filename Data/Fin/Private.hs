@@ -14,6 +14,7 @@ import Data.Foldable1
 import Data.Function (on)
 import Data.Functor.Classes
 import Data.Functor.Compose
+import Data.Kind (Type)
 import qualified Data.List as L
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
@@ -28,7 +29,7 @@ import Data.Typeable
 import qualified Numeric.Natural as N
 import Text.Read (Read (..))
 
-data Fin :: Peano -> * where
+data Fin :: Peano -> Type where
     Zero :: Fin (P.Succ n)
     Succ :: Fin n -> Fin (P.Succ n)
 

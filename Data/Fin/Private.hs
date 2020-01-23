@@ -85,6 +85,14 @@ inj₁ :: Fin n -> Fin (P.Succ n)
 inj₁ Zero = Zero
 inj₁ (Succ n) = Succ (inj₁ n)
 
+proj₁ :: Natural n => Fin (P.Succ n) -> Maybe (Fin n)
+proj₁ = unProj₁ $ natural (Proj₁ $ \ case Zero -> Nothing
+                                          Succ n -> case n of)
+                          (Proj₁ $ \ case Zero -> Just Zero
+                                          Succ n -> Succ <$> proj₁ n)
+
+newtype Proj₁ n = Proj₁ { unProj₁ :: Fin (P.Succ n) -> Maybe (Fin n) }
+
 lift₁ :: (Fin m -> Fin n) -> Fin (P.Succ m) -> Fin (P.Succ n)
 lift₁ _ Zero = Zero
 lift₁ f (Succ n) = Succ (f n)

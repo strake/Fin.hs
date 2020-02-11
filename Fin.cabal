@@ -50,3 +50,7 @@ library
                      , foldable1 >=0.1 && <0.2
   else
     build-depends:     base >=4.17 && < 5
+
+source-repository head
+  type:     git
+  location: https://github.com/strake/Fin.hs

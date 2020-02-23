@@ -29,6 +29,7 @@ import Data.Typeable
 import qualified Numeric.Natural as N
 import Text.Read (Read (..))
 
+-- | Totally-ordered type with @n@ possible values
 data Fin :: Peano -> Type where
     Zero :: Fin (P.Succ n)
     Succ :: Fin n -> Fin (P.Succ n)
@@ -65,6 +66,7 @@ instance Natural n => Enum (Fin n) where
 
 newtype Join s a = Join { unJoin :: s a a }
 
+-- | Enumerate all values of type @'Fin' n@, in ascending order.
 enum :: Natural n => List n (Fin n)
 enum = ap $ natural (Ap Nil) (Ap (Zero :. (Succ <$> enum)))
 
@@ -101,15 +103,18 @@ fromFin :: Integral a => Fin n -> a
 fromFin Zero = 0
 fromFin (Succ n) = succ (fromFin n)
 
+-- | Convert to 'Fin', modulo @n@.
 toFin :: ∀ n a . (Natural n, Integral a) => a -> Fin (P.Succ n)
 toFin = fromJust . toFinMay . (`mod` getConst (iterate (+1) 1 :: _ n))
 
+-- | Convert to 'Fin', failing if the argument is out of bounds.
 toFinMay :: (Natural n, Integral a) => a -> Maybe (Fin n)
 toFinMay = getCompose . getCompose $
            natural (Compose . Compose $ pure Nothing)
                    (Compose . Compose $ \ case 0 -> Just Zero
                                                n -> Succ <$> toFinMay (n-1))
 
+-- | A list of exactly @n@ values of type @a@
 infixr 5 :.
 data List n a where
     Nil :: List P.Zero a
@@ -192,6 +197,7 @@ reverse :: List n a -> List n a
 reverse Nil = Nil
 reverse xs@(_:._) = liftA2 (:.) last (reverse . init) xs
 
+-- | Bring givenly many elements from the tail of the list to the front.
 rotate :: Fin n -> List n a -> List n a
 rotate Zero as = as
 rotate (Succ n) as = rotate (inj₁ n) $ last as :. init as
@@ -201,10 +207,12 @@ Nil !! n = case n of
 (x:._)  !! Zero = x
 (_:.xs) !! Succ n = xs !! n
 
+-- | Focalize on the giventh element.
 at :: Functor f => Fin n -> (a -> f a) -> List n a -> f (List n a)
 at Zero f (a:.as) = (:.as) <$> f a
 at (Succ n) f (a:.as) = (a:.) <$> at n f as
 
+-- | Swap the 2 giventh elements of the list.
 swap :: Fin n -> Fin n -> List n a -> List n a
 swap Zero Zero as = as
 swap (Succ m) (Succ n) (a:.as) = a:.swap m n as

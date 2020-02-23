@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeApplications #-}
 
+-- | See 'Permutation'
 module Data.Fin.Permutation (Permutation, apply, unapply, swap, orbit, cycles) where
 
 import Prelude (Functor (..), Applicative (..), Eq (..), Show (..), Bool (..), ($), (<$>), otherwise, snd, flip, curry, uncurry)
@@ -15,6 +16,9 @@ import Data.Natural.Class (Natural (..))
 import qualified Data.Peano as P
 import Data.Universe.Class
 
+-- | Permutation of @n@ elements
+--
+-- Any permutation can be expressed as a product of transpositions. Ergo, construct with 'Semigroup' operations and `swap`.
 data Permutation n where
     PZ :: Permutation P.Zero
     PS :: Fin (P.Succ n) -> Permutation n -> Permutation (P.Succ n)
@@ -58,6 +62,7 @@ instance Natural n => Group (Permutation n) where
           where (ns, q) = go p
                 ms@(m:._) = L.swap Zero n $ Zero:.(Succ <$> ns)
 
+-- | Transposition of the giventh elements
 swap :: Natural n => Fin n -> Fin n -> Permutation n
 swap = unOp₂ $ natural (Op₂ $ \ case) $ Op₂ . curry $ \ case
     (Zero, Zero) -> mempty
@@ -67,10 +72,12 @@ swap = unOp₂ $ natural (Op₂ $ \ case) $ Op₂ . curry $ \ case
 
 newtype Op₂ a b n = Op₂ { unOp₂ :: a n -> a n -> b n }
 
+-- | Orbit of the given index under the given permutation
 orbit :: Natural n => Permutation n -> Fin n -> NonEmpty (Fin n)
 orbit p n = case (!! n) <$> iterate (apply p) enum of
     a:<as -> a:|takeWhile (/= a) as
 
+-- | All the cycles of the given permutation, which are necessarily disjoint
 cycles :: ∀ n . Natural n => Permutation (P.Succ n) -> NonEmpty (NonEmpty (Fin (P.Succ n)))
 cycles p = nubOn minimum $ orbit p <$> case enum @(P.Succ n) of n:.ns -> n:|toList ns
 

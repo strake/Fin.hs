@@ -11,6 +11,8 @@ category:            Data
 build-type:          Simple
 cabal-version:       >=1.10
 
+flag foldable1
+
 library
   build-depends:       peano
   exposed-modules:     Data.Fin
@@ -19,14 +21,13 @@ library
   other-modules:       Data.Ap
                      , Data.Fin.Private
   build-depends:       alg >=0.2.5 && <0.3
-                     , base >=4.7 && <5
-                     , foldable1 >=0.1 && <0.2
                      , natural-induction >=0.2 && <0.3
                      , universe-base >=1.0 && <1.1
   default-language:    Haskell2010
   default-extensions:  UnicodeSyntax
                      , LambdaCase
                      , EmptyCase
+                     , PartialTypeSignatures
                      , ScopedTypeVariables
                      , FlexibleContexts
                      , FlexibleInstances
@@ -43,3 +44,9 @@ library
                        -Werror=incomplete-record-updates
                        -Werror=missing-fields
                        -Werror=missing-methods
+
+  if flag (foldable1)
+    build-depends:     base >=4.7 && <4.17
+                     , foldable1 >=0.1 && <0.2
+  else
+    build-depends:     base >=4.17 && < 5

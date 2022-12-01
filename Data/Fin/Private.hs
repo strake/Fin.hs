@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Data.Fin.Private where
 
@@ -9,8 +9,8 @@ import Control.Category
 import Control.Monad (Monad (..))
 import Data.Ap
 import Data.Eq
-import Data.Foldable
-import Data.Foldable1
+import Data.Foldable (Foldable (toList))
+import Data.Foldable1 (Foldable1 (foldMap1, toNonEmpty))
 import Data.Function (on)
 import Data.Functor.Classes
 import Data.Functor.Compose
@@ -36,11 +36,11 @@ data Fin :: Peano -> Type where
 deriving instance Eq (Fin n)
 deriving instance Ord (Fin n)
 
-instance Show (Fin n) where show = show . fromFin @N.Natural
+instance Show (Fin n) where show = show . (fromFin :: _ -> N.Natural)
 
 instance Read (Fin P.Zero) where readPrec = empty
 instance (Natural n, Read (Fin n)) => Read (Fin (P.Succ n)) where
-    readPrec = toFinMay <$> readPrec @N.Natural >>= maybe empty pure
+    readPrec = toFinMay <$> (readPrec :: _ N.Natural) >>= maybe empty pure
 
 instance Natural n => Bounded (Fin (P.Succ n)) where
     minBound = Zero
@@ -59,7 +59,7 @@ instance Natural n => Enum (Fin n) where
     pred = unJoin . getCompose $ natural (Compose . Join $ \ case) $ Compose . Join $ \ case
         Zero -> error "pred 0"
         Succ n -> inj₁ n
-    enumFrom = runKleisli . unJoin . getCompose $ natural (Compose . Join . Kleisli $ \ case) $ Compose . Join . Kleisli @[] $ \ case
+    enumFrom = runKleisli . unJoin . getCompose $ natural (Compose . Join . Kleisli $ \ case) $ Compose . Join . (Kleisli :: _ -> Kleisli [] _ _) $ \ case
         Zero -> Zero : (Succ <$> toList enum)
         Succ n -> (L.tail . enumFrom . inj₁) n
 
@@ -69,11 +69,11 @@ enum :: Natural n => List n (Fin n)
 enum = ap $ natural (Ap Nil) (Ap (Zero :. (Succ <$> enum)))
 
 instance Natural n => Num (Fin n) where
-    (+) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((+) @N.Natural `on` fromFin) a b
-    (-) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((-) @  Integer `on` fromFin) a b
-    (*) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((*) @N.Natural `on` fromFin) a b
+    (+) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((+) `on` (fromFin :: _ -> N.Natural)) a b
+    (-) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((-) `on` (fromFin :: _ ->   Integer)) a b
+    (*) = unJoin₂ . getCompose $ natural (Compose . Join₂ $ \ case) $ Compose . Join₂ $ \ a b -> toFin $ ((*) `on` (fromFin :: _ -> N.Natural)) a b
     abs = id
-    negate = unJoin . getCompose $ natural (Compose . Join $ \ case) $ Compose . Join $ \ a -> toFin $ (negate @Integer . fromFin) a
+    negate = unJoin . getCompose $ natural (Compose . Join $ \ case) $ Compose . Join $ \ a -> toFin $ (negate . (fromFin :: _ -> Integer)) a
     signum = unJoin . getCompose $ natural (Compose . Join $ \ case) $ Compose . Join $ \ case
         Zero -> Zero
         Succ _ -> toFin (1 :: N.Natural)
@@ -102,7 +102,7 @@ fromFin Zero = 0
 fromFin (Succ n) = succ (fromFin n)
 
 toFin :: ∀ n a . (Natural n, Integral a) => a -> Fin (P.Succ n)
-toFin = fromJust . toFinMay . (`mod` getConst (iterate @n (+1) 1))
+toFin = fromJust . toFinMay . (`mod` getConst (iterate (+1) 1 :: _ n))
 
 toFinMay :: (Natural n, Integral a) => a -> Maybe (Fin n)
 toFinMay = getCompose . getCompose $
@@ -169,6 +169,7 @@ instance Natural n => Read1 (List n) where
 
 instance Natural n => Foldable1 (List (P.Succ n)) where
     toNonEmpty (a:.as) = a:|toList as
+    foldMap1 f = sconcat . fmap f . toNonEmpty
 
 uncons :: List (P.Succ n) a -> (a, List n a)
 uncons (x:.xs) = (x, xs)
